@@ -1,0 +1,87 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider  = "mysql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
+}
+
+enum Role {
+  ADMIN
+  STAFF
+  CHAIR
+  STUDENT
+}
+
+enum RequestType {
+  OVERLOAD
+  OVERRIDE
+  MANUAL_TAGGING
+}
+
+enum RequestStatus {
+  PENDING
+  REVIEWED
+  APPROVED
+  REJECTED
+}
+
+model User {
+  id            String         @id @default(cuid())
+  email         String         @unique
+  password      String
+  role          Role           @default(STUDENT)
+  createdAt     DateTime       @default(now())
+  updatedAt     DateTime       @updatedAt
+  studentProfile StudentProfile?
+  requests      Request[]      @relation("RequestCreatedBy")
+  statusHistory StatusHistory[] @relation("StatusBy")
+}
+
+model StudentProfile {
+  id         String  @id @default(cuid())
+  userId     String  @unique
+  user       User    @relation(fields: [userId], references: [id])
+  studentNo  String?
+  firstName  String?
+  lastName   String?
+  section    String?
+  yearLevel  Int?
+  course     String?
+}
+
+model Request {
+  id            String         @id @default(cuid())
+  type          RequestType
+  reason        String?
+  status        RequestStatus  @default(PENDING)
+  createdAt     DateTime       @default(now())
+  updatedAt     DateTime       @updatedAt
+  requestedById String
+  requestedBy   User           @relation("RequestCreatedBy", fields: [requestedById], references: [id])
+  subjects      RequestSubject[]
+  statusHistory StatusHistory[] @relation("StatusFor")
+}
+
+model RequestSubject {
+  id        String  @id @default(cuid())
+  requestId String
+  request   Request @relation(fields: [requestId], references: [id])
+  code      String
+  title     String
+  units     Int
+  section   String?
+}
+
+model StatusHistory {
+  id          String        @id @default(cuid())
+  requestId   String
+  request     Request       @relation("StatusFor", fields: [requestId], references: [id])
+  status      RequestStatus
+  remark      String?
+  changedById String
+  changedBy   User          @relation("StatusBy", fields: [changedById], references: [id])
+  createdAt   DateTime      @default(now())
+}
