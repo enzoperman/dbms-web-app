@@ -22,6 +22,9 @@ export default function MyRequests() {
 
   useEffect(() => {
     loadRequests();
+    // Poll for updates every 5 seconds
+    const interval = setInterval(loadRequests, 5000);
+    return () => clearInterval(interval);
   }, []);
 
   useEffect(() => {

@@ -26,64 +26,80 @@ const loginSchema = z.object({
 });
 
 router.post("/register", async (req, res) => {
-  const data = registerSchema.parse(req.body);
-  const existing = await prisma.user.findUnique({ where: { email: data.email } });
-  if (existing) {
-    return res.status(409).json({ message: "Email already exists" });
-  }
-  const hashed = await bcrypt.hash(data.password, 10);
-  const role = data.role || "STUDENT";
-  const user = await prisma.user.create({
-    data: {
-      email: data.email,
-      password: hashed,
-      role
+  try {
+    const data = registerSchema.parse(req.body);
+    const existing = await prisma.user.findUnique({ where: { email: data.email } });
+    if (existing) {
+      return res.status(409).json({ message: "Email already exists" });
     }
-  });
-
-  if (role === "STUDENT") {
-    await prisma.studentProfile.create({
+    const hashed = await bcrypt.hash(data.password, 10);
+    const role = data.role || "STUDENT";
+    const user = await prisma.user.create({
       data: {
-        userId: user.id,
-        studentNo: data.studentNo || null,
-        firstName: data.firstName || null,
-        lastName: data.lastName || null,
-        phone: data.phone || null,
-        section: data.section || null,
-        yearLevel: data.yearLevel || null,
-        course: data.course || null
+        email: data.email,
+        password: hashed,
+        role
       }
     });
+
+    if (role === "STUDENT") {
+      await prisma.studentProfile.create({
+        data: {
+          userId: user.id,
+          studentNo: data.studentNo || null,
+          firstName: data.firstName || null,
+          lastName: data.lastName || null,
+          phone: data.phone || null,
+          section: data.section || null,
+          yearLevel: data.yearLevel || null,
+          course: data.course || null
+        }
+      });
+    }
+    return res.status(201).json({ user: { id: user.id, email: user.email, role: user.role } });
+  } catch (error) {
+    if (error instanceof z.ZodError) {
+      return res.status(400).json({ message: error.errors[0].message });
+    }
+    console.error(error);
+    return res.status(500).json({ message: "Internal Server Error" });
   }
-  return res.status(201).json({ user: { id: user.id, email: user.email, role: user.role } });
 });
 
 router.post("/login", async (req, res) => {
-  const data = loginSchema.parse(req.body);
-  const user = await prisma.user.findUnique({ where: { email: data.email } });
-  
-  // Specific Error: User not found
-  if (!user) {
-    return res.status(404).json({ message: "Account does not exist. Please sign up." });
+  try {
+    const data = loginSchema.parse(req.body);
+    const user = await prisma.user.findUnique({ where: { email: data.email } });
+    
+    // Specific Error: User not found
+    if (!user) {
+      return res.status(404).json({ message: "Account does not exist. Please sign up." });
+    }
+
+    const match = await bcrypt.compare(data.password, user.password);
+    
+    // Specific Error: Invalid password
+    if (!match) {
+      return res.status(401).json({ message: "Incorrect password. Please try again." });
+    }
+
+    const token = jwt.sign(
+      { id: user.id, role: user.role, email: user.email },
+      process.env.JWT_SECRET,
+      { expiresIn: process.env.JWT_EXPIRES_IN || "7d" }
+    );
+
+    return res.json({
+      token,
+      user: { id: user.id, email: user.email, role: user.role }
+    });
+  } catch (error) {
+    if (error instanceof z.ZodError) {
+      return res.status(400).json({ message: error.errors[0].message });
+    }
+    console.error(error);
+    return res.status(500).json({ message: "Internal Server Error" });
   }
-
-  const match = await bcrypt.compare(data.password, user.password);
-  
-  // Specific Error: Invalid password
-  if (!match) {
-    return res.status(401).json({ message: "Incorrect password. Please try again." });
-  }
-
-  const token = jwt.sign(
-    { id: user.id, role: user.role, email: user.email },
-    process.env.JWT_SECRET,
-    { expiresIn: process.env.JWT_EXPIRES_IN || "7d" }
-  );
-
-  return res.json({
-    token,
-    user: { id: user.id, email: user.email, role: user.role }
-  });
 });
 
 router.get("/me", auth, async (req, res) => {
