@@ -14,7 +14,7 @@
     "start": "npm --workspace server start",
     "db:setup": "npm --workspace server run db:migrate && npm --workspace server run db:generate && npm --workspace server run db:seed",
     "db:seed": "npm --workspace server run db:seed",
-    "build:vercel": "npm --workspace server run db:generate"
+    "postinstall": "npm --workspace server run db:generate"
   },
   "devDependencies": {
     "concurrently": "^8.2.2"
