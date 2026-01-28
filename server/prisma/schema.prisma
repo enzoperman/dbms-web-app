@@ -22,8 +22,9 @@ enum RequestType {
 }
 
 enum RequestStatus {
+  FOR_EVALUATION
   PENDING
-  REVIEWED
+  DISCREPANCY
   APPROVED
   REJECTED
 }
@@ -47,6 +48,7 @@ model StudentProfile {
   studentNo  String?
   firstName  String?
   lastName   String?
+  phone      String?
   section    String?
   yearLevel  Int?
   course     String?
@@ -55,7 +57,9 @@ model StudentProfile {
 model Request {
   id            String         @id @default(cuid())
   type          RequestType
+  semester      String
   reason        String?
+  remarks       String?
   status        RequestStatus  @default(PENDING)
   createdAt     DateTime       @default(now())
   updatedAt     DateTime       @updatedAt
@@ -71,8 +75,9 @@ model RequestSubject {
   request   Request @relation(fields: [requestId], references: [id])
   code      String
   title     String
-  units     Int
+  units     Int     @default(3)
   section   String?
+  schedule  String?
 }
 
 model StatusHistory {

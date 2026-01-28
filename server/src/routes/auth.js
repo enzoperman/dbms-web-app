@@ -10,7 +10,14 @@ const router = express.Router();
 const registerSchema = z.object({
   email: z.string().email(),
   password: z.string().min(6),
-  role: z.enum(["ADMIN", "STAFF", "CHAIR", "STUDENT"]).optional()
+  role: z.enum(["ADMIN", "STAFF", "CHAIR", "STUDENT"]).optional(),
+  firstName: z.string().min(1).optional(),
+  lastName: z.string().min(1).optional(),
+  studentNo: z.string().min(1).optional(),
+  phone: z.string().min(6).optional(),
+  section: z.string().optional(),
+  yearLevel: z.number().int().optional(),
+  course: z.string().optional()
 });
 
 const loginSchema = z.object({
@@ -25,22 +32,47 @@ router.post("/register", async (req, res) => {
     return res.status(409).json({ message: "Email already exists" });
   }
   const hashed = await bcrypt.hash(data.password, 10);
+  const role = data.role || "STUDENT";
   const user = await prisma.user.create({
     data: {
       email: data.email,
       password: hashed,
-      role: data.role || "STUDENT"
+      role
     }
   });
+
+  if (role === "STUDENT") {
+    await prisma.studentProfile.create({
+      data: {
+        userId: user.id,
+        studentNo: data.studentNo || null,
+        firstName: data.firstName || null,
+        lastName: data.lastName || null,
+        phone: data.phone || null,
+        section: data.section || null,
+        yearLevel: data.yearLevel || null,
+        course: data.course || null
+      }
+    });
+  }
   return res.status(201).json({ user: { id: user.id, email: user.email, role: user.role } });
 });
 
 router.post("/login", async (req, res) => {
   const data = loginSchema.parse(req.body);
   const user = await prisma.user.findUnique({ where: { email: data.email } });
-  if (!user) return res.status(401).json({ message: "Invalid credentials" });
+  
+  // Specific Error: User not found
+  if (!user) {
+    return res.status(404).json({ message: "Account does not exist. Please sign up." });
+  }
+
   const match = await bcrypt.compare(data.password, user.password);
-  if (!match) return res.status(401).json({ message: "Invalid credentials" });
+  
+  // Specific Error: Invalid password
+  if (!match) {
+    return res.status(401).json({ message: "Incorrect password. Please try again." });
+  }
 
   const token = jwt.sign(
     { id: user.id, role: user.role, email: user.email },

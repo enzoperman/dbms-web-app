@@ -9,6 +9,7 @@ export function AuthProvider({ children }) {
 
   useEffect(() => {
     if (!token) return;
+    api.defaults.headers.common.Authorization = `Bearer ${token}`;
     api
       .get("/auth/me", {
         headers: { Authorization: `Bearer ${token}` }
@@ -18,17 +19,23 @@ export function AuthProvider({ children }) {
   }, [token]);
 
   const login = async (email, password) => {
-    const res = await api.post("/auth/login", { email, password });
-    setToken(res.data.token);
-    localStorage.setItem("coerts_token", res.data.token);
-    setUser(res.data.user);
-    return res.data.user;
+    try {
+      const res = await api.post("/auth/login", { email, password });
+      setToken(res.data.token);
+      localStorage.setItem("coerts_token", res.data.token);
+      api.defaults.headers.common.Authorization = `Bearer ${res.data.token}`;
+      setUser(res.data.user);
+      return res.data.user;
+    } catch (error) {
+      throw error;
+    }
   };
 
   const logout = () => {
     setUser(null);
     setToken(null);
     localStorage.removeItem("coerts_token");
+    delete api.defaults.headers.common.Authorization;
   };
 
   return (

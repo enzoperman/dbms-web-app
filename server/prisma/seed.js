@@ -41,6 +41,7 @@ async function main() {
       studentNo: "2024-0001",
       firstName: "Juan",
       lastName: "Dela Cruz",
+      phone: "09123456789",
       section: "CPE-3A",
       yearLevel: 3,
       course: "Computer Engineering"
@@ -50,17 +51,32 @@ async function main() {
   await prisma.request.create({
     data: {
       type: "OVERLOAD",
+      semester: "2nd Sem 2025-2026",
       reason: "Need extra units for graduation plan",
       requestedById: student.id,
       subjects: {
         create: [
-          { code: "CPE-401", title: "Embedded Systems", units: 3, section: "CPE-3A" },
-          { code: "CPE-402", title: "Computer Networks", units: 3, section: "CPE-3A" }
+          {
+            code: "CPE-401",
+            title: "Embedded Systems",
+            units: 3,
+            section: "CPE-3A",
+            schedule: "MWF 08:00-09:30"
+          },
+          {
+            code: "CPE-402",
+            title: "Computer Networks",
+            units: 3,
+            section: "CPE-3A",
+            schedule: "TTh 10:00-11:30"
+          }
         ]
       },
+      status: "FOR_EVALUATION",
+      remarks: "Reviewing overload justification.",
       statusHistory: {
         create: {
-          status: "PENDING",
+          status: "FOR_EVALUATION",
           remark: "Seeded request",
           changedById: staff.id
         }
