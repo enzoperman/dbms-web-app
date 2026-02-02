@@ -264,19 +264,41 @@ router.delete("/users/:id", auth, async (req, res) => {
       return res.status(400).json({ message: "Cannot delete student accounts from here" });
     }
 
-    // Check if user has any status history entries (as changedBy)
-    const statusHistoryCount = await prisma.statusHistory.count({
-      where: { changedById: userId }
-    });
-
-    if (statusHistoryCount > 0) {
-      // Delete the status history entries first, or reassign them
-      await prisma.statusHistory.deleteMany({
+    // Use a transaction to delete all related records and then the user
+    await prisma.$transaction(async (tx) => {
+      // Delete status history entries where this user made changes
+      await tx.statusHistory.deleteMany({
         where: { changedById: userId }
       });
-    }
 
-    await prisma.user.delete({ where: { id: userId } });
+      // Delete any requests made by this user (shouldn't exist for staff/chair but just in case)
+      const userRequests = await tx.request.findMany({
+        where: { requestedById: userId },
+        select: { id: true }
+      });
+
+      if (userRequests.length > 0) {
+        const requestIds = userRequests.map(r => r.id);
+        
+        // Delete related request subjects
+        await tx.requestSubject.deleteMany({
+          where: { requestId: { in: requestIds } }
+        });
+
+        // Delete related status history
+        await tx.statusHistory.deleteMany({
+          where: { requestId: { in: requestIds } }
+        });
+
+        // Delete the requests
+        await tx.request.deleteMany({
+          where: { id: { in: requestIds } }
+        });
+      }
+
+      // Finally delete the user
+      await tx.user.delete({ where: { id: userId } });
+    });
 
     return res.json({ message: "User deleted successfully" });
   } catch (error) {
@@ -285,7 +307,7 @@ router.delete("/users/:id", auth, async (req, res) => {
     // Handle foreign key constraint errors
     if (error.code === 'P2003') {
       return res.status(400).json({ 
-        message: "Cannot delete this user because they have associated records. Please reassign or delete their records first." 
+        message: "Cannot delete this user because they have associated records. Please contact support." 
       });
     }
     
