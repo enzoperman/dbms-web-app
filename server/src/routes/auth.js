@@ -246,7 +246,7 @@ router.delete("/users/:id", auth, async (req, res) => {
       return res.status(403).json({ message: "Access denied. Chair only." });
     }
 
-    const userId = parseInt(req.params.id);
+    const userId = req.params.id;
 
     // Prevent deleting yourself
     if (userId === req.user.id) {
