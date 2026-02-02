@@ -22,7 +22,8 @@ const registerSchema = z.object({
 
 const loginSchema = z.object({
   email: z.string().email(),
-  password: z.string().min(6)
+  password: z.string().min(6),
+  expectedRole: z.enum(["STUDENT", "STAFF", "CHAIR"]).optional()
 });
 
 router.post("/register", async (req, res) => {
@@ -81,6 +82,33 @@ router.post("/login", async (req, res) => {
     // Specific Error: Invalid password
     if (!match) {
       return res.status(401).json({ message: "Incorrect password. Please try again." });
+    }
+
+    // Validate selected role matches user's actual role
+    if (data.expectedRole) {
+      const isStudent = user.role === "STUDENT";
+      const isStaffOrChair = user.role === "STAFF" || user.role === "CHAIR" || user.role === "ADMIN";
+      
+      if (data.expectedRole === "STUDENT" && !isStudent) {
+        return res.status(403).json({ 
+          message: "This account is not registered as a Student. Please select the correct role.",
+          code: "ROLE_MISMATCH"
+        });
+      }
+      
+      if (data.expectedRole === "STAFF" && user.role !== "STAFF") {
+        return res.status(403).json({ 
+          message: "This account is not registered as Staff. Please select the correct role.",
+          code: "ROLE_MISMATCH"
+        });
+      }
+      
+      if (data.expectedRole === "CHAIR" && user.role !== "CHAIR") {
+        return res.status(403).json({ 
+          message: "This account is not registered as Department Chair. Please select the correct role.",
+          code: "ROLE_MISMATCH"
+        });
+      }
     }
 
     const token = jwt.sign(

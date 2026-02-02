@@ -40,7 +40,7 @@ export default function Login() {
   const onSubmit = async (data) => {
     try {
       setError("");
-      const user = await login(data.email, data.password);
+      const user = await login(data.email, data.password, selectedRole);
       if (user.role === "STUDENT") return navigate("/student");
       return navigate("/staff");
     } catch (err) {
@@ -48,6 +48,8 @@ export default function Login() {
         setError("Account does not exist. Please create an account.");
       } else if (err.response?.status === 401) {
         setError("Incorrect password. Please check your spelling.");
+      } else if (err.response?.status === 403) {
+        setError(err.response?.data?.message || "You selected the wrong role. Please go back and select the correct one.");
       } else {
         setError("Login failed. Please try again later.");
       }

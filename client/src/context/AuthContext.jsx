@@ -18,9 +18,9 @@ export function AuthProvider({ children }) {
       .catch(() => logout());
   }, [token]);
 
-  const login = async (email, password) => {
+  const login = async (email, password, expectedRole) => {
     try {
-      const res = await api.post("/auth/login", { email, password });
+      const res = await api.post("/auth/login", { email, password, expectedRole });
       setToken(res.data.token);
       localStorage.setItem("coerts_token", res.data.token);
       api.defaults.headers.common.Authorization = `Bearer ${res.data.token}`;
