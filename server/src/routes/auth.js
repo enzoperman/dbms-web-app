@@ -264,11 +264,31 @@ router.delete("/users/:id", auth, async (req, res) => {
       return res.status(400).json({ message: "Cannot delete student accounts from here" });
     }
 
+    // Check if user has any status history entries (as changedBy)
+    const statusHistoryCount = await prisma.statusHistory.count({
+      where: { changedById: userId }
+    });
+
+    if (statusHistoryCount > 0) {
+      // Delete the status history entries first, or reassign them
+      await prisma.statusHistory.deleteMany({
+        where: { changedById: userId }
+      });
+    }
+
     await prisma.user.delete({ where: { id: userId } });
 
     return res.json({ message: "User deleted successfully" });
   } catch (error) {
-    console.error(error);
+    console.error("Delete user error:", error);
+    
+    // Handle foreign key constraint errors
+    if (error.code === 'P2003') {
+      return res.status(400).json({ 
+        message: "Cannot delete this user because they have associated records. Please reassign or delete their records first." 
+      });
+    }
+    
     return res.status(500).json({ message: "Internal Server Error" });
   }
 });

@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../../context/AuthContext";
 import api from "../../services/api";
+import { PageLoading } from "../../components/LoadingSpinner";
 import {
   FileText,
   Clock,
@@ -99,11 +100,7 @@ export default function StaffDashboard() {
   };
 
   if (loading) {
-    return (
-      <div className="flex h-96 items-center justify-center">
-        <p className="text-gray-500">Loading...</p>
-      </div>
-    );
+    return <PageLoading message="Loading dashboard..." />;
   }
 
   return (

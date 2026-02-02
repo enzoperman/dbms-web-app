@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { useAuth } from "../../context/AuthContext";
 import api from "../../services/api";
+import { PageLoading } from "../../components/LoadingSpinner";
 import { User, Mail, Phone, CreditCard, Calendar, Edit2, Save, X } from "lucide-react";
 
 export default function Profile() {
@@ -63,11 +64,7 @@ export default function Profile() {
   };
 
   if (loading) {
-    return (
-      <div className="flex h-96 items-center justify-center">
-        <p className="text-gray-500">Loading...</p>
-      </div>
-    );
+    return <PageLoading message="Loading profile..." />;
   }
 
   if (!profile) {

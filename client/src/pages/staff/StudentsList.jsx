@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import api from "../../services/api";
+import { PageLoading } from "../../components/LoadingSpinner";
 import {
   Users,
   Search,
@@ -89,11 +90,7 @@ export default function StudentsList() {
   };
 
   if (loading) {
-    return (
-      <div className="flex h-96 items-center justify-center">
-        <p className="text-gray-500">Loading...</p>
-      </div>
-    );
+    return <PageLoading message="Loading students..." />;
   }
 
   return (

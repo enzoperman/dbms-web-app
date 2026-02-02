@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { UserPlus, Users, UserCog, Trash2, Eye, EyeOff, Shield, Copy, Check, Key } from "lucide-react";
 import api from "../../services/api";
+import { TableLoading } from "../../components/LoadingSpinner";
 
 export default function UserManagement() {
   const [users, setUsers] = useState([]);
@@ -284,7 +285,7 @@ export default function UserManagement() {
         </div>
 
         {loading ? (
-          <div className="p-6 text-center text-gray-500">Loading...</div>
+          <TableLoading />
         ) : staffUsers.length === 0 ? (
           <div className="p-6 text-center text-gray-500">
             No staff or chair accounts found.
