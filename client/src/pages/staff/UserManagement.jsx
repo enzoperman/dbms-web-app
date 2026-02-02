@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { useForm } from "react-hook-form";
-import { UserPlus, Users, UserCog, Trash2, Eye, EyeOff, Shield } from "lucide-react";
+import { UserPlus, Users, UserCog, Trash2, Eye, EyeOff, Shield, Copy, Check, Key } from "lucide-react";
 import api from "../../services/api";
 
 export default function UserManagement() {
@@ -10,6 +10,8 @@ export default function UserManagement() {
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
+  const [createdCredentials, setCreatedCredentials] = useState(null);
+  const [copied, setCopied] = useState(false);
 
   const { register, handleSubmit, reset, formState } = useForm();
 
@@ -32,7 +34,16 @@ export default function UserManagement() {
     try {
       setError("");
       setSuccess("");
+      setCreatedCredentials(null);
       await api.post("/auth/create-staff", {
+        email: data.email,
+        password: data.password,
+        role: data.role,
+        firstName: data.firstName,
+        lastName: data.lastName,
+      });
+      // Store credentials to display
+      setCreatedCredentials({
         email: data.email,
         password: data.password,
         role: data.role,
@@ -54,10 +65,19 @@ export default function UserManagement() {
     try {
       await api.delete(`/auth/users/${userId}`);
       setSuccess("User deleted successfully");
+      setCreatedCredentials(null);
       fetchUsers();
     } catch (err) {
       setError(err.response?.data?.message || "Failed to delete user");
     }
+  };
+
+  const copyCredentials = () => {
+    if (!createdCredentials) return;
+    const text = `Account Credentials\n-------------------\nName: ${createdCredentials.firstName} ${createdCredentials.lastName}\nRole: ${createdCredentials.role}\nEmail: ${createdCredentials.email}\nPassword: ${createdCredentials.password}`;
+    navigator.clipboard.writeText(text);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
   };
 
   const staffUsers = users.filter((u) => u.role === "STAFF" || u.role === "CHAIR");
@@ -94,6 +114,65 @@ export default function UserManagement() {
       {success && (
         <div className="rounded-lg bg-green-50 p-4 text-sm text-green-800 border border-green-200">
           {success}
+        </div>
+      )}
+
+      {/* Created Credentials Display */}
+      {createdCredentials && (
+        <div className="rounded-xl bg-gradient-to-r from-blue-50 to-indigo-50 p-6 shadow-md border border-blue-200">
+          <div className="flex items-center justify-between mb-4">
+            <div className="flex items-center gap-3">
+              <div className="flex h-10 w-10 items-center justify-center rounded-full bg-blue-100">
+                <Key className="h-5 w-5 text-blue-600" />
+              </div>
+              <div>
+                <h3 className="font-semibold text-gray-800">Account Created Successfully</h3>
+                <p className="text-sm text-gray-600">Save these credentials - password cannot be retrieved later</p>
+              </div>
+            </div>
+            <button
+              onClick={copyCredentials}
+              className="flex items-center gap-2 rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white transition hover:bg-blue-700"
+            >
+              {copied ? <Check className="h-4 w-4" /> : <Copy className="h-4 w-4" />}
+              {copied ? "Copied!" : "Copy All"}
+            </button>
+          </div>
+          
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mt-4">
+            <div className="rounded-lg bg-white p-4 border border-gray-200">
+              <p className="text-xs font-medium text-gray-500 uppercase tracking-wide">Name</p>
+              <p className="mt-1 font-medium text-gray-800">
+                {createdCredentials.firstName} {createdCredentials.lastName}
+              </p>
+            </div>
+            <div className="rounded-lg bg-white p-4 border border-gray-200">
+              <p className="text-xs font-medium text-gray-500 uppercase tracking-wide">Role</p>
+              <p className="mt-1 font-medium text-gray-800">
+                {createdCredentials.role === "CHAIR" ? "Department Chair" : "Staff"}
+              </p>
+            </div>
+            <div className="rounded-lg bg-white p-4 border border-gray-200">
+              <p className="text-xs font-medium text-gray-500 uppercase tracking-wide">Email / Username</p>
+              <p className="mt-1 font-mono text-gray-800">{createdCredentials.email}</p>
+            </div>
+            <div className="rounded-lg bg-white p-4 border border-gray-200">
+              <p className="text-xs font-medium text-gray-500 uppercase tracking-wide">Password</p>
+              <p className="mt-1 font-mono text-gray-800">{createdCredentials.password}</p>
+            </div>
+          </div>
+          
+          <div className="mt-4 flex items-center gap-2 text-xs text-amber-700 bg-amber-50 rounded-lg p-3 border border-amber-200">
+            <Shield className="h-4 w-4 flex-shrink-0" />
+            <span>Please share these credentials securely with the user. They should change their password after first login.</span>
+          </div>
+          
+          <button
+            onClick={() => setCreatedCredentials(null)}
+            className="mt-4 text-sm text-gray-500 hover:text-gray-700"
+          >
+            Dismiss
+          </button>
         </div>
       )}
 
