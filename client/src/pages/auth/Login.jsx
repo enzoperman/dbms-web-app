@@ -117,15 +117,6 @@ export default function Login() {
               })}
             </div>
 
-            <div className="mt-6 text-center text-sm text-gray-600">
-              Don't have an account?{" "}
-              <button
-                className="font-medium text-red-800 hover:text-red-900"
-                onClick={() => navigate("/register")}
-              >
-                Create account
-              </button>
-            </div>
           </div>
         )}
 
@@ -221,15 +212,23 @@ export default function Login() {
               </button>
             </form>
 
-            <div className="mt-6 text-center text-sm text-gray-600">
-              Don't have an account?{" "}
-              <button
-                className="font-medium text-red-800 hover:text-red-900"
-                onClick={() => navigate("/register")}
-              >
-                Create account
-              </button>
-            </div>
+            {/* Show different message based on role */}
+            {selectedRole === "STUDENT" ? (
+              <div className="mt-6 text-center text-sm text-gray-600">
+                Don't have an account?{" "}
+                <button
+                  className="font-medium text-red-800 hover:text-red-900"
+                  onClick={() => navigate("/register")}
+                >
+                  Create account
+                </button>
+              </div>
+            ) : (
+              <div className="mt-6 rounded-lg bg-amber-50 p-3 text-center text-sm text-amber-800 border border-amber-200">
+                <p className="font-medium">Staff & Chair accounts are managed internally.</p>
+                <p className="mt-1 text-xs text-amber-600">Contact your Department Chair for account access.</p>
+              </div>
+            )}
           </div>
         )}
 

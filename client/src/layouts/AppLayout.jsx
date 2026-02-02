@@ -7,7 +7,8 @@ import {
   Users, 
   User, 
   LogOut, 
-  GraduationCap 
+  GraduationCap,
+  UserCog 
 } from "lucide-react";
 
 export default function AppLayout({ children }) {
@@ -22,6 +23,7 @@ export default function AppLayout({ children }) {
 
   const isStudent = user?.role === "STUDENT";
   const isStaff = user?.role === "STAFF" || user?.role === "CHAIR" || user?.role === "ADMIN";
+  const isChair = user?.role === "CHAIR";
 
   const studentNav = [
     { icon: LayoutDashboard, label: "Dashboard", path: "/student" },
@@ -34,6 +36,7 @@ export default function AppLayout({ children }) {
     { icon: LayoutDashboard, label: "Dashboard", path: "/staff" },
     { icon: FileText, label: "All Requests", path: "/staff/requests" },
     { icon: Users, label: "Students", path: "/staff/students" },
+    ...(isChair ? [{ icon: UserCog, label: "User Management", path: "/staff/users" }] : []),
   ];
 
   const navItems = isStudent ? studentNav : staffNav;

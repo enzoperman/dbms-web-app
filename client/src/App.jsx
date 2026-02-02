@@ -9,6 +9,7 @@ import StaffDashboard from "./pages/staff/StaffDashboard.jsx";
 import AllRequests from "./pages/staff/AllRequests.jsx";
 import StudentsList from "./pages/staff/StudentsList.jsx";
 import RequestDetail from "./pages/staff/RequestDetail.jsx";
+import UserManagement from "./pages/staff/UserManagement.jsx";
 import { AuthProvider, useAuth } from "./context/AuthContext.jsx";
 import AppLayout from "./layouts/AppLayout.jsx";
 
@@ -115,6 +116,16 @@ export default function App() {
             <ProtectedRoute roles={["STAFF", "CHAIR", "ADMIN"]}>
               <AppLayout>
                 <StudentsList />
+              </AppLayout>
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/staff/users"
+          element={
+            <ProtectedRoute roles={["CHAIR"]}>
+              <AppLayout>
+                <UserManagement />
               </AppLayout>
             </ProtectedRoute>
           }
